@@ -1,0 +1,544 @@
+PureWater Express - Application installable (PWA)
+Voici les 3 fichiers à créer dans un même dossier : index.html, manifest.json et sw.js. Ensuite tu mets le dossier en ligne (Netlify Drop ou GitHub Pages, gratuit) et tu partages le lien sur WhatsApp.
+1. Fichier index.html
+Remplace 22890000000 par ton vrai numéro WhatsApp (indicatif 228, sans le +).
+<!DOCTYPE html>
+<html lang="fr">
+<head>PureWater Express - Application installable (PWA)
+Voici les 3 fichiers à créer dans un même dossier : index.html, manifest.json et sw.js. Ensuite tu mets le dossier en ligne (Netlify Drop ou GitHub Pages, gratuit) et tu partages le lien sur WhatsApp.
+1. Fichier index.html
+Remplace 22890000000 par ton vrai numéro WhatsApp (indicatif 228, sans le +).
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0284c7">
+<link rel="manifest" href="manifest.json">
+<title>PureWater Express - Commande & Livraison Kpalimé</title>
+<style>
+* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+body { background-color: #f0f7ff; color: #1e293b; padding-bottom: 100px; }
+header { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+header p { font-size: 0.9rem; opacity: 0.9; }
+.container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
+.card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.product-info h3 { font-size: 1.05rem; color: #0f172a; margin-bottom: 4px; }
+.product-info p { font-size: 0.85rem; color: #64748b; margin-bottom: 6px; }
+.price { font-weight: bold; color: #0284c7; font-size: 1rem; }
+.controls { display: flex; align-items: center; gap: 10px; }
+.btn-qty { background: #e0f2fe; color: #0284c7; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 1.3rem; font-weight: bold; cursor: pointer; }
+.btn-qty:active { background: #bae6fd; }
+.qty { font-weight: bold; font-size: 1.1rem; min-width: 20px; text-align: center; }
+.form-section { background: white; border-radius: 12px; padding: 15px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.form-section h2 { font-size: 1.1rem; margin-bottom: 12px; color: #0f172a; }
+input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+.footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -4px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; }
+.total-box span { display: block; font-size: 0.8rem; color: #64748b; }
+.total-box strong { font-size: 1.25rem; color: #0f172a; }
+.btn-whatsapp { background: #25D366; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+.btn-whatsapp:hover { background: #20bd5a; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💧 PureWater Express</h1>
+  <p>Livraison rapide d'eau pure à Kpalimé</p>
+</header>
+
+<div class="container">
+  <div id="products-list"></div>
+
+  <div class="form-section">
+    <h2>📍 Informations de livraison</h2>
+    <input type="text" id="client-name" placeholder="Votre nom ou nom de la boutique">
+    <input type="text" id="client-quartier" placeholder="Quartier / Repère (ex: Château, Agomé, Marché...)">
+    <select id="payment-method">
+      <option value="Espèces à la livraison">💵 Espèces à la livraison</option>
+      <option value="Mixx by Yas (TMoney)">📱 Mixx by Yas (TMoney)</option>
+      <option value="Flooz">📱 Flooz</option>
+    </select>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <div class="total-box">
+    <span>Total à payer</span>
+    <strong id="total-amount">0 F CFA</strong>
+  </div>
+  <button class="btn-whatsapp" onclick="sendOrder()">Commander sur WhatsApp</button>
+</div>
+
+<script>
+// REMPLACE PAR TON NUMERO WHATSAPP (indicatif 228, sans le +)
+const MON_NUMERO_WHATSAPP = "22890000000";
+
+const produits = [
+  { id: 1, nom: "Paquet Pure Water (30 sachets)", desc: "Eau filtrée et traitée - Sac standard", prix: 500, qty: 0 },
+  { id: 2, nom: "Lot de 10 Paquets (Gros)", desc: "Idéal boutiques, maquis et cérémonies", prix: 4500, qty: 0 },
+  { id: 3, nom: "Pack Bouteilles 1,5L (x6)", desc: "Eau minérale en bouteilles", prix: 2000, qty: 0 },
+  { id: 4, nom: "Bonbonne d'eau 20L", desc: "Recharge pour fontaine à eau", prix: 1500, qty: 0 }
+];
+
+function renderProducts() {
+  const list = document.getElementById("products-list");
+  list.innerHTML = "";
+  produits.forEach((p, index) => {
+    list.innerHTML += `
+      <div class="card">
+        <div class="product-info">
+          <h3>${p.nom}</h3>
+          <p>${p.desc}</p>
+          <div class="price">${p.prix.toLocaleString('fr-FR')} F CFA</div>
+        </div>
+        <div class="controls">
+          <button class="btn-qty" onclick="updateQty(${index}, -1)">-</button>
+          <span class="qty">${p.qty}</span>
+          <button class="btn-qty" onclick="updateQty(${index}, 1)">+</button>
+        </div>
+      </div>`;
+  });
+  updateTotal();
+}
+
+function updateQty(index, change) {
+  if (produits[index].qty + change >= 0) {
+    produits[index].qty += change;
+    renderProducts();
+  }
+}
+
+function updateTotal() {
+  const total = produits.reduce((sum, p) => sum + (p.prix * p.qty), 0);
+  document.getElementById("total-amount").innerText = total.toLocaleString('fr-FR') + " F CFA";
+}
+
+function sendOrder() {
+  const name = document.getElementById("client-name").value.trim();
+  const quartier = document.getElementById("client-quartier").value.trim();
+  const payment = document.getElementById("payment-method").value;
+  const selected = produits.filter(p => p.qty > 0);
+
+  if (selected.length === 0) { alert("Veuillez sélectionner au moins un produit."); return; }
+  if (!name || !quartier) { alert("Veuillez entrer votre nom et votre quartier de livraison."); return; }
+
+  let message = `*NOUVELLE COMMANDE PURE WATER* 💧\n\n`;
+  message += `👤 *Client :* ${name}\n`;
+  message += `📍 *Quartier :* ${quartier}\n`;
+  message += `💳 *Paiement :* ${payment}\n\n`;
+  message += `*Détails de la commande :*\n`;
+
+  let total = 0;
+  selected.forEach(p => {
+    const sub = p.prix * p.qty;
+    total += sub;
+    message += `- ${p.qty}x ${p.nom} : ${sub.toLocaleString('fr-FR')} F\n`;
+  });
+  message += `\n💰 *TOTAL : ${total.toLocaleString('fr-FR')} F CFA*`;
+
+  const url = `https://wa.me/${MON_NUMERO_WHATSAPP}?text=${encodeURIComponent(message)}`;
+  window.open(url, "_blank");
+}
+
+renderProducts();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
+2. Fichier manifest.json
+Il dit au téléphone que c'est une application. Ajoute aussi deux images carrées de ton logo, nommées icon-192.png (192 par 192 pixels) et icon-512.png (512 par 512 pixels).
+{
+  "name": "PureWater Express",
+  "short_name": "PureWater",
+  "description": "Commande d'eau pure à Kpalimé",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f7ff",
+  "theme_color": "#0284c7",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+3. Fichier sw.js
+Il garde la page en mémoire pour qu'elle s'ouvre vite, même avec une mauvaise connexion.
+const CACHE = 'purewater-v1';
+const FILES = ['./', './index.html', './manifest.json'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});
+4. Mettre en ligne et partager
+1.  Mets les fichiers index.html, manifest.json, sw.js et les deux icônes dans un seul dossier.
+2.  Va sur le site Netlify Drop (app.netlify.com/drop) et glisse le dossier : tu obtiens un lien gratuit tout de suite.
+3.  Ouvre le lien sur ton téléphone, vérifie une commande de test, puis partage-le dans tes groupes et statuts WhatsApp.
+4.  Tes clients ouvrent le lien dans Chrome, touchent les trois points, puis « Ajouter à l'écran d'accueil » : l'application apparaît comme les autres.
+5. Pour modifier tes prix
+Dans index.html, change simplement les valeurs prix dans la liste produits. Si tu changes quelque chose, remplace purewater-v1 par purewater-v2 dans sw.js pour que les clients reçoivent la mise à jour.PureWater Express - Application installable (PWA)
+Voici les 3 fichiers à créer dans un même dossier : index.html, manifest.json et sw.js. Ensuite tu mets le dossier en ligne (Netlify Drop ou GitHub Pages, gratuit) et tu partages le lien sur WhatsApp.
+1. Fichier index.html
+Remplace 22890000000 par ton vrai numéro WhatsApp (indicatif 228, sans le +).
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0284c7">
+<link rel="manifest" href="manifest.json">
+<title>PureWater Express - Commande & Livraison Kpalimé</title>
+<style>
+* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+body { background-color: #f0f7ff; color: #1e293b; padding-bottom: 100px; }
+header { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+header p { font-size: 0.9rem; opacity: 0.9; }
+.container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
+.card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.product-info h3 { font-size: 1.05rem; color: #0f172a; margin-bottom: 4px; }
+.product-info p { font-size: 0.85rem; color: #64748b; margin-bottom: 6px; }
+.price { font-weight: bold; color: #0284c7; font-size: 1rem; }
+.controls { display: flex; align-items: center; gap: 10px; }
+.btn-qty { background: #e0f2fe; color: #0284c7; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 1.3rem; font-weight: bold; cursor: pointer; }
+.btn-qty:active { background: #bae6fd; }
+.qty { font-weight: bold; font-size: 1.1rem; min-width: 20px; text-align: center; }
+.form-section { background: white; border-radius: 12px; padding: 15px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.form-section h2 { font-size: 1.1rem; margin-bottom: 12px; color: #0f172a; }
+input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+.footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -4px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; }
+.total-box span { display: block; font-size: 0.8rem; color: #64748b; }
+.total-box strong { font-size: 1.25rem; color: #0f172a; }
+.btn-whatsapp { background: #25D366; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+.btn-whatsapp:hover { background: #20bd5a; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💧 PureWater Express</h1>
+  <p>Livraison rapide d'eau pure à Kpalimé</p>
+</header>
+
+<div class="container">
+  <div id="products-list"></div>
+
+  <div class="form-section">
+    <h2>📍 Informations de livraison</h2>
+    <input type="text" id="client-name" placeholder="Votre nom ou nom de la boutique">
+    <input type="text" id="client-quartier" placeholder="Quartier / Repère (ex: Château, Agomé, Marché...)">
+    <select id="payment-method">
+      <option value="Espèces à la livraison">💵 Espèces à la livraison</option>
+      <option value="Mixx by Yas (TMoney)">📱 Mixx by Yas (TMoney)</option>
+      <option value="Flooz">📱 Flooz</option>
+    </select>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <div class="total-box">
+    <span>Total à payer</span>
+    <strong id="total-amount">0 F CFA</strong>
+  </div>
+  <button class="btn-whatsapp" onclick="sendOrder()">Commander sur WhatsApp</button>
+</div>
+
+<script>
+// REMPLACE PAR TON NUMERO WHATSAPP (indicatif 228, sans le +)
+const MON_NUMERO_WHATSAPP = "22890000000";
+
+const produits = [
+  { id: 1, nom: "Paquet Pure Water (30 sachets)", desc: "Eau filtrée et traitée - Sac standard", prix: 500, qty: 0 },
+  { id: 2, nom: "Lot de 10 Paquets (Gros)", desc: "Idéal boutiques, maquis et cérémonies", prix: 4500, qty: 0 },
+  { id: 3, nom: "Pack Bouteilles 1,5L (x6)", desc: "Eau minérale en bouteilles", prix: 2000, qty: 0 },
+  { id: 4, nom: "Bonbonne d'eau 20L", desc: "Recharge pour fontaine à eau", prix: 1500, qty: 0 }
+];
+
+function renderProducts() {
+  const list = document.getElementById("products-list");
+  list.innerHTML = "";
+  produits.forEach((p, index) => {
+    list.innerHTML += `
+      <div class="card">
+        <div class="product-info">
+          <h3>${p.nom}</h3>
+          <p>${p.desc}</p>
+          <div class="price">${p.prix.toLocaleString('fr-FR')} F CFA</div>
+        </div>
+        <div class="controls">
+          <button class="btn-qty" onclick="updateQty(${index}, -1)">-</button>
+          <span class="qty">${p.qty}</span>
+          <button class="btn-qty" onclick="updateQty(${index}, 1)">+</button>
+        </div>
+      </div>`;
+  });
+  updateTotal();
+}
+
+function updateQty(index, change) {
+  if (produits[index].qty + change >= 0) {
+    produits[index].qty += change;
+    renderProducts();
+  }
+}
+
+function updateTotal() {
+  const total = produits.reduce((sum, p) => sum + (p.prix * p.qty), 0);
+  document.getElementById("total-amount").innerText = total.toLocaleString('fr-FR') + " F CFA";
+}
+
+function sendOrder() {
+  const name = document.getElementById("client-name").value.trim();
+  const quartier = document.getElementById("client-quartier").value.trim();
+  const payment = document.getElementById("payment-method").value;
+  const selected = produits.filter(p => p.qty > 0);
+
+  if (selected.length === 0) { alert("Veuillez sélectionner au moins un produit."); return; }
+  if (!name || !quartier) { alert("Veuillez entrer votre nom et votre quartier de livraison."); return; }
+
+  let message = `*NOUVELLE COMMANDE PURE WATER* 💧\n\n`;
+  message += `👤 *Client :* ${name}\n`;
+  message += `📍 *Quartier :* ${quartier}\n`;
+  message += `💳 *Paiement :* ${payment}\n\n`;
+  message += `*Détails de la commande :*\n`;
+
+  let total = 0;
+  selected.forEach(p => {
+    const sub = p.prix * p.qty;
+    total += sub;
+    message += `- ${p.qty}x ${p.nom} : ${sub.toLocaleString('fr-FR')} F\n`;
+  });
+  message += `\n💰 *TOTAL : ${total.toLocaleString('fr-FR')} F CFA*`;
+
+  const url = `https://wa.me/${MON_NUMERO_WHATSAPP}?text=${encodeURIComponent(message)}`;
+  window.open(url, "_blank");
+}
+
+renderProducts();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
+2. Fichier manifest.json
+Il dit au téléphone que c'est une application. Ajoute aussi deux images carrées de ton logo, nommées icon-192.png (192 par 192 pixels) et icon-512.png (512 par 512 pixels).
+{
+  "name": "PureWater Express",
+  "short_name": "PureWater",
+  "description": "Commande d'eau pure à Kpalimé",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f7ff",
+  "theme_color": "#0284c7",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+3. Fichier sw.js
+Il garde la page en mémoire pour qu'elle s'ouvre vite, même avec une mauvaise connexion.
+const CACHE = 'purewater-v1';
+const FILES = ['./', './index.html', './manifest.json'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});
+4. Mettre en ligne et partager
+1.  Mets les fichiers index.html, manifest.json, sw.js et les deux icônes dans un seul dossier.
+2.  Va sur le site Netlify Drop (app.netlify.com/drop) et glisse le dossier : tu obtiens un lien gratuit tout de suite.
+3.  Ouvre le lien sur ton téléphone, vérifie une commande de test, puis partage-le dans tes groupes et statuts WhatsApp.
+4.  Tes clients ouvrent le lien dans Chrome, touchent les trois points, puis « Ajouter à l'écran d'accueil » : l'application apparaît comme les autres.
+5. Pour modifier tes prix
+Dans index.html, change simplement les valeurs prix dans la liste produits. Si tu changes quelque chose, remplace purewater-v1 par purewater-v2 dans sw.js pour que les clients reçoivent la mise à jour.
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0284c7">
+<link rel="manifest" href="manifest.json">
+<title>PureWater Express - Commande & Livraison Kpalimé</title>
+<style>
+* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+body { background-color: #f0f7ff; color: #1e293b; padding-bottom: 100px; }
+header { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+header p { font-size: 0.9rem; opacity: 0.9; }
+.container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
+.card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.product-info h3 { font-size: 1.05rem; color: #0f172a; margin-bottom: 4px; }
+.product-info p { font-size: 0.85rem; color: #64748b; margin-bottom: 6px; }
+.price { font-weight: bold; color: #0284c7; font-size: 1rem; }
+.controls { display: flex; align-items: center; gap: 10px; }
+.btn-qty { background: #e0f2fe; color: #0284c7; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 1.3rem; font-weight: bold; cursor: pointer; }
+.btn-qty:active { background: #bae6fd; }
+.qty { font-weight: bold; font-size: 1.1rem; min-width: 20px; text-align: center; }
+.form-section { background: white; border-radius: 12px; padding: 15px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.form-section h2 { font-size: 1.1rem; margin-bottom: 12px; color: #0f172a; }
+input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+.footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -4px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; }
+.total-box span { display: block; font-size: 0.8rem; color: #64748b; }
+.total-box strong { font-size: 1.25rem; color: #0f172a; }
+.btn-whatsapp { background: #25D366; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+.btn-whatsapp:hover { background: #20bd5a; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💧 PureWater Express</h1>
+  <p>Livraison rapide d'eau pure à Kpalimé</p>
+</header>
+
+<div class="container">
+  <div id="products-list"></div>
+
+  <div class="form-section">
+    <h2>📍 Informations de livraison</h2>
+    <input type="text" id="client-name" placeholder="Votre nom ou nom de la boutique">
+    <input type="text" id="client-quartier" placeholder="Quartier / Repère (ex: Château, Agomé, Marché...)">
+    <select id="payment-method">
+      <option value="Espèces à la livraison">💵 Espèces à la livraison</option>
+      <option value="Mixx by Yas (TMoney)">📱 Mixx by Yas (TMoney)</option>
+      <option value="Flooz">📱 Flooz</option>
+    </select>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <div class="total-box">
+    <span>Total à payer</span>
+    <strong id="total-amount">0 F CFA</strong>
+  </div>
+  <button class="btn-whatsapp" onclick="sendOrder()">Commander sur WhatsApp</button>
+</div>
+
+<script>
+// REMPLACE PAR TON NUMERO WHATSAPP (indicatif 228, sans le +)
+const MON_NUMERO_WHATSAPP = "22890000000";
+
+const produits = [
+  { id: 1, nom: "Paquet Pure Water (30 sachets)", desc: "Eau filtrée et traitée - Sac standard", prix: 500, qty: 0 },
+  { id: 2, nom: "Lot de 10 Paquets (Gros)", desc: "Idéal boutiques, maquis et cérémonies", prix: 4500, qty: 0 },
+  { id: 3, nom: "Pack Bouteilles 1,5L (x6)", desc: "Eau minérale en bouteilles", prix: 2000, qty: 0 },
+  { id: 4, nom: "Bonbonne d'eau 20L", desc: "Recharge pour fontaine à eau", prix: 1500, qty: 0 }
+];
+
+function renderProducts() {
+  const list = document.getElementById("products-list");
+  list.innerHTML = "";
+  produits.forEach((p, index) => {
+    list.innerHTML += `
+      <div class="card">
+        <div class="product-info">
+          <h3>${p.nom}</h3>
+          <p>${p.desc}</p>
+          <div class="price">${p.prix.toLocaleString('fr-FR')} F CFA</div>
+        </div>
+        <div class="controls">
+          <button class="btn-qty" onclick="updateQty(${index}, -1)">-</button>
+          <span class="qty">${p.qty}</span>
+          <button class="btn-qty" onclick="updateQty(${index}, 1)">+</button>
+        </div>
+      </div>`;
+  });
+  updateTotal();
+}
+
+function updateQty(index, change) {
+  if (produits[index].qty + change >= 0) {
+    produits[index].qty += change;
+    renderProducts();
+  }
+}
+
+function updateTotal() {
+  const total = produits.reduce((sum, p) => sum + (p.prix * p.qty), 0);
+  document.getElementById("total-amount").innerText = total.toLocaleString('fr-FR') + " F CFA";
+}
+
+function sendOrder() {
+  const name = document.getElementById("client-name").value.trim();
+  const quartier = document.getElementById("client-quartier").value.trim();
+  const payment = document.getElementById("payment-method").value;
+  const selected = produits.filter(p => p.qty > 0);
+
+  if (selected.length === 0) { alert("Veuillez sélectionner au moins un produit."); return; }
+  if (!name || !quartier) { alert("Veuillez entrer votre nom et votre quartier de livraison."); return; }
+
+  let message = `*NOUVELLE COMMANDE PURE WATER* 💧\n\n`;
+  message += `👤 *Client :* ${name}\n`;
+  message += `📍 *Quartier :* ${quartier}\n`;
+  message += `💳 *Paiement :* ${payment}\n\n`;
+  message += `*Détails de la commande :*\n`;
+
+  let total = 0;
+  selected.forEach(p => {
+    const sub = p.prix * p.qty;
+    total += sub;
+    message += `- ${p.qty}x ${p.nom} : ${sub.toLocaleString('fr-FR')} F\n`;
+  });
+  message += `\n💰 *TOTAL : ${total.toLocaleString('fr-FR')} F CFA*`;
+
+  const url = `https://wa.me/${MON_NUMERO_WHATSAPP}?text=${encodeURIComponent(message)}`;
+  window.open(url, "_blank");
+}
+
+renderProducts();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
+2. Fichier manifest.json
+Il dit au téléphone que c'est une application. Ajoute aussi deux images carrées de ton logo, nommées icon-192.png (192 par 192 pixels) et icon-512.png (512 par 512 pixels).
+{
+  "name": "PureWater Express",
+  "short_name": "PureWater",
+  "description": "Commande d'eau pure à Kpalimé",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f7ff",
+  "theme_color": "#0284c7",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+3. Fichier sw.js
+Il garde la page en mémoire pour qu'elle s'ouvre vite, même avec une mauvaise connexion.
+const CACHE = 'purewater-v1';
+const FILES = ['./', './index.html', './manifest.json'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});
+4. Mettre en ligne et partager
+1.  Mets les fichiers index.html, manifest.json, sw.js et les deux icônes dans un seul dossier.
+2.  Va sur le site Netlify Drop (app.netlify.com/drop) et glisse le dossier : tu obtiens un lien gratuit tout de suite.
+3.  Ouvre le lien sur ton téléphone, vérifie une commande de test, puis partage-le dans tes groupes et statuts WhatsApp.
+4.  Tes clients ouvrent le lien dans Chrome, touchent les trois points, puis « Ajouter à l'écran d'accueil » : l'application apparaît comme les autres.
+5. Pour modifier tes prix
+Dans index.html, change simplement les valeurs prix dans la liste produits. Si tu changes quelque chose, remplace purewater-v1 par purewater-v2 dans sw.js pour que les clients reçoivent la mise à jour.
