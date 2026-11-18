@@ -1,0 +1,11 @@
+{
+  "name": "PureWater Express",
+  "short_name": "PureWater",
+  "description": "Commande et livraison d'eau",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f7ff",
+  "theme_color": "#0284c7",
+  "icons": []
+}
+  
